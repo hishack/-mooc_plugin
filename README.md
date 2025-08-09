@@ -8,6 +8,11 @@
 
 ---
 
+## 获取插件:
+
+通过网盘分享的文件：
+链接: https://pan.baidu.com/s/1ukOprjEsWhXVHlH7ustq-w?pwd=6666 提取码: 6666 
+
 ## 🖼 系统截图
 
 首页  
