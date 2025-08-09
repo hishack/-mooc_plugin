@@ -2,23 +2,22 @@
 # mooc_plugin
 
 ## 📖 简介
-**mooc_plugin** 是一个基于 **Plasmo、React、TailwindCSS、Shadcn/UI** 开发的浏览器扩展插件，结合多种现代前端工具和 UI 组件库，旨在为 MOOC 等在线学习平台提供增强功能和更流畅的使用体验。
+**mooc_plugin** 是一个基于 **Plasmo、React、TailwindCSS、Shadcn/UI** 开发的浏览器扩展插件，结合多种现代前端工具和 UI 组件库，旨在为减轻水课作业对同学们身心的危害。
 
-插件集成了 OpenAI API、UI 动画、日期选择、数据存储等多种能力，方便快速扩展新功能。
+插件集成了 OpenAI API、UI 动画、数据存储等多种能力，方便快速扩展新功能。
 
 ---
 
 ## 🖼 系统截图
-> 以下为示例截图，可替换为你项目的真实图片
 
 首页  
-<img src="./assets/home.png" alt="首页" style="zoom:50%;" />
+<img src="./assets/home.png" alt="首页" style="zoom:30%;" />
 
-课程页面增强效果  
-<img src="./assets/profile.png" alt="课程页面" style="zoom:50%;" />
+个人资料 
+<img src="./assets/profile.png" alt="课程页面" style="zoom:30%;" />
 
 设置页面  
-<img src="./assets/settings.png" alt="设置" style="zoom:50%;" />
+<img src="./assets/settings.png" alt="设置" style="zoom:30%;" />
 
 ---
 
@@ -98,7 +97,7 @@ pnpm build:production
 ## 📬 联系方式
 
 * Author: **shack**
-* Email: [2053540371@qq,com](2053540371@qq.com)
+* Email: [2053540371@qq.com](2053540371@qq.com)
 
 ---
 
