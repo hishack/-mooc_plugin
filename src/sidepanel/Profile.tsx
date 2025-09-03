@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator"
 import headerImage from "data-base64:~images/header.jpg"
 import wechatPay from "data-base64:~images/support.jpg"
 import water from "data-base64:~images/water.png"
-import { BadgeCheckIcon, Mail, Sparkles } from "lucide-react"
+import { BadgeCheckIcon, Code2, Mail, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 export function Profile() {
@@ -49,6 +49,25 @@ export function Profile() {
         </div>
       </div>
       <Separator className="my-6" />
+
+            <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+          <Code2 className="h-5 w-5" />
+          项目源码
+        </h3>
+        <a
+          href="https://github.com/hishack/-mooc_plugin"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+          https://github.com/hishack/-mooc_plugin
+        </a>
+        <p className="text-xs text-muted-foreground mt-1">
+          仅供个人使用，禁止商业用途
+        </p>
+      </div>
+
+            <Separator className="my-6" />
 
       <div className="space-y-6">
         <div className="text-center space-y-2">
@@ -94,6 +113,10 @@ export function Profile() {
           </Button>
         </div>
       </div>
+
+
+
+
     </div>
   )
 }
