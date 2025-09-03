@@ -1,32 +1,29 @@
-
 export const BROWSER_STORAGE_KEY = 'ai-mooc-plugins'
 
 export type SettingsInfo = {
   model: string;
   theme: string;
   apiKey: string;
-
 }
 
-// 选项信息接口
 export interface QuestionOption {
   letter: string; 
   content: string; 
 }
 
-// 题目信息主接口
 export interface QuestionInfo {
   index: number; 
-  type: '单选' | '多选'; 
-  content: string; // 题目内
-  options: QuestionOption[]; 
+  type: '单选' | '多选' | '判断' | '填空'; 
+  content: string; 
+  options?: QuestionOption[]; 
+  blanks?: number; 
 }
 
-export interface QuestionsAnswer{
-  'id': number
-  'answer': string[]
+export interface QuestionsAnswer {
+  id: number;
+  answer: string[];
 }
-export interface Answer{
-  answer:QuestionsAnswer[]
+
+export interface Answer {
+  answer: QuestionsAnswer[];
 }
-    

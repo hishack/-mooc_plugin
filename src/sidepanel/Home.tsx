@@ -20,7 +20,7 @@ import { sendToBackground } from "@plasmohq/messaging"
 import { errorToast, successToast } from "~utils/Tip"
 
 const FIX_MESSAGES =
-  ',请以这种格式只输出答案,只输出答案:[{"id": 1, "answer": ["B"]},{"id": 2, "answer": ["A", "C"]}]'
+  ',请以这种格式只输出答案,只输出答案,填空题不同选项都以逗号隔开:[{"id": 1, "answer": ["B"]},{"id": 2, "answer": ["A", "C"]}]'
 
 export function Home() {
   const [isManualMode, setIsManualMode] = useState(false)

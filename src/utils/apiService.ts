@@ -39,7 +39,8 @@ export async function apiAnswer(payload: ApiPayload) {
     apiKey: token
   });
 
-  const prompt = `${payload.questions},请以这种格式只输出答案,只输出答案:[{"id": 1, "answer": ["B"]},{"id": 2, "answer": ["A", "C"]}]`;
+  const prompt = `${payload.questions},请以这种格式只输出答案,只输出答案,填空题不同选项都以逗号隔开:[{"id": 1, "answer": ["B"]},{"id": 2, "answer": ["A", "C"]}]`;
+
 
   try {
     const completion = await openai.chat.completions.create({

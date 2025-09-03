@@ -7,10 +7,6 @@ import type { RequestBody, ResponseBody } from "~types/type";
 
 
 const handler: PlasmoMessaging.MessageHandler<RequestBody, ResponseBody> = async (req, res) => {
-  
-  
-
-
   try {
 
       sendToContentScript({
