@@ -99,10 +99,10 @@ pnpm build:production
 
 ---
 
-## 📬 联系方式
+## 📬 进群讨论
 
-* Author: **shack**
-* Email: [2053540371@qq.com](2053540371@qq.com)
+* 欢迎开发者及用户进群讨论
+<img src="./assets/qun.jpg" alt="设置" style="zoom:30%;" />
 
 ---
 
