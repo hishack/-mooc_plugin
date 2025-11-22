@@ -1,5 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo";
-import {parseQuestions } from '~utils/getQuestions'
+import {parseQuestions } from '~utils/getQs'
 
 
 export const config: PlasmoCSConfig = {

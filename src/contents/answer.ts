@@ -1,5 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo";
-import { autoAnswer } from "~utils/answerQuestion";
+import { autoAnswer } from "~utils/answerQs";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.icourse163.org/*"],

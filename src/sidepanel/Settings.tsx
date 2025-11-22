@@ -29,11 +29,11 @@ import {
 } from "@/components/ui/table"
 import { useSettings } from "@/hooks/use-settings"
 import { useTheme } from "@/hooks/use-theme"
-import { Monitor, Moon, Pencil, Sun, Trash } from "lucide-react"
+import { Monitor, Moon, Sun, Trash } from "lucide-react"
 import React, { useState } from "react"
 
+import { errorToast, successToast } from "~components/alter"
 import { useTokenInfo } from "~hooks/use-tokenInfo"
-import { errorToast, successToast } from "~utils/Tip"
 
 export function Settings() {
   const { appearance, loading, updateAppearance } = useSettings()
