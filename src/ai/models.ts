@@ -1,11 +1,6 @@
-import type{ ModelItem, AIProvider } from './types'
+import type { ModelItem, AIProvider } from './types'
 
-/**
- * All available AI model configurations
- * To add a new model, simply append a new configuration to this array
- */
 export const AI_MODELS: ModelItem[] = [
-  // DeepSeek Models
   {
     provider: 'deepseek',
     model: 'deepseek-chat',
@@ -20,8 +15,6 @@ export const AI_MODELS: ModelItem[] = [
     baseURL: 'https://api.deepseek.com',
     name: 'DeepSeek Reasoner'
   },
-
-  // GLM Models
   {
     provider: 'glm',
     model: 'glm-4',
@@ -29,8 +22,6 @@ export const AI_MODELS: ModelItem[] = [
     baseURL: 'https://open.bigmodel.cn/api/paas/v4',
     name: 'GLM-4'
   },
-
-  // Doubao Models
   {
     provider: 'doubao',
     model: 'doubao-pro-4k',
@@ -40,30 +31,18 @@ export const AI_MODELS: ModelItem[] = [
   }
 ]
 
-/**
- * Get model configuration by alias
- */
 export function getModelByAlias(alias: string): ModelItem | undefined {
   return AI_MODELS.find(model => model.alias === alias)
 }
 
-/**
- * Get all models by provider
- */
 export function getModelsByProvider(provider: AIProvider): ModelItem[] {
   return AI_MODELS.filter(model => model.provider === provider)
 }
 
-/**
- * Get all available aliases
- */
 export function getAllAliases(): string[] {
   return AI_MODELS.map(model => model.alias)
 }
 
-/**
- * Check if alias exists
- */
 export function isValidAlias(alias: string): boolean {
   return getAllAliases().includes(alias)
 }

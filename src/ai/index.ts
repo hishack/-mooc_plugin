@@ -1,31 +1,29 @@
 import { Storage } from '@plasmohq/storage'
 import type { ApiPayload, TokenInfo, AIResponse } from './types'
 import { createClientFromTokenInfo } from './client'
+import type { MultiTokenStorage } from '../hooks/use-multiTokenInfo'
 
-// Storage keys
 const STORAGE_KEYS = {
-  TOKEN: 'token'
+  MULTI_TOKENS: 'multi_tokens'
 } as const
 
-/**
- * Main API function for answering questions using AI models
- * This is the single entry point for the AI calling system
- *
- * @param payload - Object containing the questions string
- * @returns Promise<string> - Pure JSON string response or null on failure
- */
 export async function apiAnswer(payload: ApiPayload): Promise<string | null> {
   try {
-    // 1. Read current user selected model and token from local storage
     const storage = new Storage({ area: 'local' })
-    const tokenInfo = await storage.get<TokenInfo>(STORAGE_KEYS.TOKEN)
+    const multiTokenStorage = await storage.get<MultiTokenStorage>(STORAGE_KEYS.MULTI_TOKENS)
 
-    if (!tokenInfo || !tokenInfo.token) {
-      console.error('No valid token found in storage')
+    if (!multiTokenStorage || !multiTokenStorage.activeModel || !multiTokenStorage.tokens[multiTokenStorage.activeModel]) {
+      console.error('No active model or token found in storage')
       return null
     }
 
-    // 2. Create client based on the stored model configuration
+    const tokenInfo = multiTokenStorage.tokens[multiTokenStorage.activeModel]
+
+    if (!tokenInfo.token) {
+      console.error('No valid token found for active model')
+      return null
+    }
+
     const clientInstance = createClientFromTokenInfo(tokenInfo)
 
     if (!clientInstance) {
@@ -33,20 +31,17 @@ export async function apiAnswer(payload: ApiPayload): Promise<string | null> {
       return null
     }
 
-    // 3. Prepare the prompt with the specified format requirement
-    const prompt = `${payload.questions}, ����<�� JSON
+    const prompt = `${payload.questions}, 请以这种格式只输出 JSON：
     [{"id":1,"answer":["B"]},{"id":2,"answer":["A","C"]}]
-    ������Y��`
+    不能解释、不能输出多余内容`
 
-    // 4. Send chat.completions request
     const completion = await clientInstance.client.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
       model: clientInstance.model,
-      temperature: 0.1, // Low temperature for consistent output
-      max_tokens: 4000 // Adjust based on expected response size
+      temperature: 0.1,
+      max_tokens: 4000
     })
 
-    // 5. Return pure JSON string
     const response = completion.choices[0]?.message?.content
 
     if (!response) {
@@ -54,10 +49,8 @@ export async function apiAnswer(payload: ApiPayload): Promise<string | null> {
       return null
     }
 
-    // Clean up the response to ensure it's a valid JSON string
     const cleanedResponse = response.trim()
 
-    // Validate if the response looks like JSON (basic check)
     if (!cleanedResponse.startsWith('[') && !cleanedResponse.startsWith('{')) {
       console.error('Response does not appear to be in JSON format:', cleanedResponse)
       return null
@@ -71,41 +64,38 @@ export async function apiAnswer(payload: ApiPayload): Promise<string | null> {
   }
 }
 
-/**
- * Get current token information from storage
- * @returns Promise<TokenInfo | null> - Current token configuration or null
- */
 export async function getCurrentTokenInfo(): Promise<TokenInfo | null> {
   const storage = new Storage({ area: 'local' })
-  return await storage.get<TokenInfo>(STORAGE_KEYS.TOKEN)
+  const multiTokenStorage = await storage.get<MultiTokenStorage>(STORAGE_KEYS.MULTI_TOKENS)
+
+  if (!multiTokenStorage || !multiTokenStorage.activeModel || !multiTokenStorage.tokens[multiTokenStorage.activeModel]) {
+    return null
+  }
+
+  return multiTokenStorage.tokens[multiTokenStorage.activeModel]
 }
 
-/**
- * Save token information to storage
- * @param tokenInfo - Token information to save
- */
 export async function saveTokenInfo(tokenInfo: TokenInfo): Promise<void> {
   const storage = new Storage({ area: 'local' })
-  await storage.set(STORAGE_KEYS.TOKEN, tokenInfo)
+  const multiTokenStorage: MultiTokenStorage = await storage.get(STORAGE_KEYS.MULTI_TOKENS) || {
+    tokens: {},
+    activeModel: null
+  }
+
+  multiTokenStorage.tokens[tokenInfo.model] = tokenInfo
+  multiTokenStorage.activeModel = tokenInfo.model
+
+  await storage.set(STORAGE_KEYS.MULTI_TOKENS, multiTokenStorage)
 }
 
-/**
- * Clear token information from storage
- */
 export async function clearTokenInfo(): Promise<void> {
   const storage = new Storage({ area: 'local' })
-  await storage.remove(STORAGE_KEYS.TOKEN)
+  await storage.remove(STORAGE_KEYS.MULTI_TOKENS)
 }
 
-/**
- * Parse AI response to typed object
- * @param jsonResponse - JSON string from AI response
- * @returns Parsed AIResponse array or null
- */
 export function parseAIResponse(jsonResponse: string): AIResponse[] | null {
   try {
     const parsed = JSON.parse(jsonResponse)
-    // Ensure the response is an array
     return Array.isArray(parsed) ? parsed : null
   } catch (error) {
     console.error('Failed to parse AI response:', error)
@@ -113,7 +103,6 @@ export function parseAIResponse(jsonResponse: string): AIResponse[] | null {
   }
 }
 
-// Export all types and models for external use if needed
 export * from './types'
 export * from './models'
 export * from './client'
