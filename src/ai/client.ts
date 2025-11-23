@@ -1,35 +1,29 @@
 import OpenAI from 'openai'
-import { getModelByAlias, isValidAlias } from './models'
-import type { ClientInstance, TokenInfo } from './types'
+import { getProviderById, findModelByAlias } from './providers'
+import type { ClientInstance, ValidationResult, AIProvider } from './types/index'
 
-export interface ValidationResult {
-  success: boolean
-  message: string
-  details?: any
-}
-
-export function createAIClient(alias: string, token: string): ClientInstance | null {
-  if (!token || !isValidAlias(alias)) {
-    console.error('Invalid token or alias:', { alias, hasToken: !!token })
+export function createAIClient(providerId: AIProvider, apiKey: string, modelId?: string): ClientInstance | null {
+  if (!apiKey) {
+    console.error('API Key is required')
     return null
   }
 
-  const modelConfig = getModelByAlias(alias)
-  if (!modelConfig) {
-    console.error('Model configuration not found for alias:', alias)
+  const provider = getProviderById(providerId)
+  if (!provider) {
+    console.error('Provider not found:', providerId)
     return null
   }
 
   try {
     const client = new OpenAI({
-      baseURL: modelConfig.baseURL,
-      apiKey: token,
+      baseURL: provider.baseURL,
+      apiKey: apiKey,
       dangerouslyAllowBrowser: true
     })
 
     return {
       client,
-      model: modelConfig.model
+      model: modelId || provider.models[0]?.id || ''
     }
   } catch (error) {
     console.error('Failed to create OpenAI client:', error)
@@ -37,37 +31,47 @@ export function createAIClient(alias: string, token: string): ClientInstance | n
   }
 }
 
-export function createClientFromTokenInfo(tokenInfo: TokenInfo | null): ClientInstance | null {
-  if (!tokenInfo) {
-    console.error('Token info is null')
+export function createClientByAlias(alias: string, apiKey: string): ClientInstance | null {
+  const modelInfo = findModelByAlias(alias)
+  if (!modelInfo) {
+    console.error('Model not found for alias:', alias)
     return null
   }
 
-  return createAIClient(tokenInfo.model, tokenInfo.token)
+  return createAIClient(modelInfo.provider.id, apiKey, modelInfo.model.id)
 }
 
-export async function validateApiKey(alias: string, token: string): Promise<ValidationResult> {
-  console.log('🔍 开始验证API Key...', { alias, tokenLength: token?.length })
+export async function validateProviderApiKey(providerId: AIProvider, apiKey: string): Promise<ValidationResult> {
+  console.log('🔍 开始验证Provider API Key...', { providerId, tokenLength: apiKey?.length })
 
-  if (!token || !isValidAlias(alias)) {
-    console.log('❌ 验证失败: 无效的token或alias')
+  if (!apiKey) {
+    console.log('❌ 验证失败: API Key为空')
     return {
       success: false,
-      message: 'API Key格式无效或模型不支持'
+      message: 'API Key不能为空'
     }
   }
 
-  const clientInstance = createAIClient(alias, token)
+  const provider = getProviderById(providerId)
+  if (!provider) {
+    console.log('❌ 验证失败: Provider不存在')
+    return {
+      success: false,
+      message: 'Provider不存在'
+    }
+  }
+
+  const clientInstance = createAIClient(providerId, apiKey, provider.models[0].id)
   if (!clientInstance) {
     console.log('❌ 验证失败: 无法创建客户端')
     return {
       success: false,
-      message: '无法创建API客户端，请检查模型配置'
+      message: '无法创建API客户端，请检查配置'
     }
   }
 
   try {
-    console.log('📡 发送测试请求到API...')
+    console.log('📡 发送测试请求到Provider...')
     const testResponse = await clientInstance.client.chat.completions.create({
       messages: [{ role: 'user', content: 'test' }],
       model: clientInstance.model,
@@ -75,7 +79,8 @@ export async function validateApiKey(alias: string, token: string): Promise<Vali
       temperature: 0.1
     })
 
-    console.log('✅ API响应成功:', {
+    console.log('✅ Provider API响应成功:', {
+      provider: provider.name,
       id: testResponse.id,
       created: testResponse.created,
       model: testResponse.model,
@@ -94,17 +99,20 @@ export async function validateApiKey(alias: string, token: string): Promise<Vali
 
     return {
       success: true,
-      message: 'API Key验证成功',
+      message: `${provider.name} API Key验证成功`,
       details: {
+        provider: provider.name,
         model: testResponse.model,
         usage: testResponse.usage,
         responseId: testResponse.id,
-        responseContent: testResponse.choices[0]?.message?.content
+        responseContent: testResponse.choices[0]?.message?.content,
+        availableModels: provider.models
       }
     }
 
   } catch (error: any) {
-    console.log('❌ API验证失败:', {
+    console.log('❌ Provider API验证失败:', {
+      provider: provider.name,
       name: error?.name,
       message: error?.message,
       status: error?.status,
@@ -113,20 +121,20 @@ export async function validateApiKey(alias: string, token: string): Promise<Vali
       type: error?.type
     })
 
-    let errorMessage = 'API Key验证失败'
+    let errorMessage = `${provider.name} API Key验证失败`
 
     if (error?.status === 401) {
-      errorMessage = 'API Key无效，请检查是否正确'
+      errorMessage = `${provider.name} API Key无效，请检查是否正确`
     } else if (error?.status === 403) {
-      errorMessage = 'API Key无权限访问此模型'
+      errorMessage = `API Key无权限访问${provider.name}`
     } else if (error?.status === 404) {
-      errorMessage = '模型不存在或名称错误'
+      errorMessage = `模型不存在或${provider.name}服务地址错误`
     } else if (error?.status === 429) {
       errorMessage = 'API调用频率过高或余额不足'
     } else if (error?.code === 'insufficient_quota') {
       errorMessage = 'API余额不足，请充值后重试'
     } else if (error?.message) {
-      errorMessage = `API错误: ${error.message}`
+      errorMessage = `${provider.name} API错误: ${error.message}`
     }
 
     return {
@@ -158,4 +166,17 @@ export async function validateClientConnection(clientInstance: ClientInstance): 
     console.error('Client validation failed:', error)
     return false
   }
+}
+
+// 兼容性函数 - 保持向后兼容
+export async function validateApiKey(alias: string, token: string): Promise<ValidationResult> {
+  const modelInfo = findModelByAlias(alias)
+  if (!modelInfo) {
+    return {
+      success: false,
+      message: '模型别名不存在'
+    }
+  }
+
+  return validateProviderApiKey(modelInfo.provider.id, token)
 }

@@ -11,15 +11,14 @@ import {
 import { useSettings } from "@/hooks/use-settings"
 import { useTheme } from "@/hooks/use-theme"
 import { Monitor, Moon, Sun, Bot } from "lucide-react"
-import { ModelTable } from "~/components/model-management/ModelTable"
-import { useMultiTokenInfo } from "~/hooks/use-multiTokenInfo"
+import { ProviderTable } from "~/components/provider-management/ProviderTable"
+import { useProviderStorage } from "~/hooks/use-providerStorage"
 import { successToast, errorToast } from "~components/alter"
 import { Loader2 } from "lucide-react"
-import type { ValidationResult } from "~/ai/client"
 
 export function Settings() {
   const { appearance, loading, updateAppearance } = useSettings()
-  const { storage, loading: tokenLoading, updateTokenInfo, deleteTokenInfo, setActiveModel } = useMultiTokenInfo()
+  const { storage, loading: tokenLoading, updateProviderStorage, deleteProvider, setActiveProvider, setActiveModel, getActiveProviderInfo } = useProviderStorage()
 
   const { resolvedTheme, setTheme } = useTheme({
     theme: appearance.theme,
@@ -32,57 +31,48 @@ export function Settings() {
     { value: "dark", label: "深色", icon: Moon }
   ] as const
 
-  const handleModelSwitch = async (modelAlias: string) => {
+  const handleProviderSetActive = async (providerId: any) => {
     try {
-      await setActiveModel(modelAlias)
-      successToast("已切换模型")
+      await setActiveProvider(providerId)
+      successToast(providerId ? `已切换到 ${providerId}` : "已取消激活Provider")
     } catch (error) {
-      errorToast("切换模型失败")
+      errorToast("切换Provider失败")
       console.error(error)
     }
   }
 
-  const handleImportApiKey = async (modelAlias: string, apiKey: string, validationResult?: ValidationResult) => {
+  const handleProviderUpdate = async (providerId: any, data: any) => {
     try {
-      console.log('💾 保存验证过的API Key...', {
-        modelAlias,
-        hasValidation: !!validationResult,
-        validationSuccess: validationResult?.success
-      })
-
-      await updateTokenInfo(modelAlias, {
-        token: apiKey,
-        token_rest_money: "0",
-        establish_time: new Date().toISOString()
-      })
-
-      // 根据验证结果显示不同的成功消息
-      if (validationResult?.success) {
-        console.log('🎉 API Key保存成功！验证详情:', validationResult.details)
-        successToast(`✅ API Key 验证成功并已保存！`)
-
-        // 如果有余额信息，可以在这里显示
-        if (validationResult.details?.usage) {
-          console.log('💰 Token使用信息:', validationResult.details.usage)
-        }
-      } else {
-        successToast("API Key 导入成功")
-      }
+      await updateProviderStorage(providerId, data)
+      successToast("API Key更新成功")
     } catch (error) {
-      errorToast("API Key 保存失败")
-      console.error('保存API Key时出错:', error)
+      errorToast("API Key更新失败")
+      console.error(error)
     }
   }
 
-  const handleDeleteApiKey = async (modelAlias: string) => {
+  const handleProviderDelete = async (providerId: any) => {
     try {
-      await deleteTokenInfo(modelAlias)
-      successToast("API Key 已删除")
+      await deleteProvider(providerId)
+      successToast("API Key已删除")
     } catch (error) {
       errorToast("删除失败")
       console.error(error)
     }
   }
+
+  const handleModelSwitch = async (providerId: any, modelId: string) => {
+    try {
+      await setActiveModel(providerId, modelId)
+      successToast("模型已切换")
+    } catch (error) {
+      errorToast("模型切换失败")
+      console.error(error)
+    }
+  }
+
+  // 获取当前激活的Provider和模型信息
+  const activeProviderInfo = getActiveProviderInfo()
 
   if (loading || tokenLoading) {
     return (
@@ -132,39 +122,60 @@ export function Settings() {
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            模型管理
+            Provider 管理
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            管理不同AI模型的API Key，每次只能启用一个模型
+            管理不同AI Provider的API Key，一个API Key可以切换该Provider下的所有模型
           </p>
         </div>
 
+        {/* 当前激活的Provider信息 */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">当前激活模型</Label>
-          <Select
-            value={storage.activeModel || ""}
-            onValueChange={handleModelSwitch}
-            disabled={!storage.activeModel && Object.keys(storage.tokens).length === 0}
-          >
-            <SelectTrigger className="w-full sm:w-64">
-              <SelectValue placeholder="请先导入API Key并选择激活模型" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(storage.tokens).map(([alias, tokenInfo]) => (
-                <SelectItem key={alias} value={alias}>
-                  {alias} ({tokenInfo.token_rest_money || "未知"}余额)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-sm font-medium">当前激活的Provider</Label>
+          {activeProviderInfo ? (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="font-medium text-blue-900">{activeProviderInfo.provider?.name}</span>
+                  <span className="text-blue-700">→</span>
+                  <span className="text-blue-900">{activeProviderInfo.activeModel?.name}</span>
+                  <span className="text-xs text-blue-600">({activeProviderInfo.activeModel?.alias})</span>
+                </div>
+                <Select
+                  value={storage.globalActiveProvider || ""}
+                  onValueChange={handleProviderSetActive}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="选择Provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(storage.providers)
+                      .filter(([_, provider]) => provider !== null)
+                      .map(([providerId, _]) => (
+                        <SelectItem key={providerId} value={providerId}>
+                          {providerId}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+              <p className="text-sm text-gray-600">未激活任何Provider，请先导入API Key</p>
+            </div>
+          )}
         </div>
 
-        <ModelTable
-          activeModel={storage.activeModel}
-          tokenInfos={storage.tokens}
+        {/* Provider表格 */}
+        <ProviderTable
+          providerStorage={storage.providers}
+          globalActiveProvider={storage.globalActiveProvider}
+          onProviderUpdate={handleProviderUpdate}
+          onProviderDelete={handleProviderDelete}
+          onProviderSetActive={handleProviderSetActive}
           onModelSwitch={handleModelSwitch}
-          onImportApiKey={handleImportApiKey}
-          onDeleteApiKey={handleDeleteApiKey}
         />
       </div>
     </div>
