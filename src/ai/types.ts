@@ -2,7 +2,7 @@ import type { QuestionInfo, QuestionsAnswer, Answer } from '../utils/constants'
 
 export type AIProvider = 'deepseek' | 'glm' | 'doubao'
 
-export type ModelAlias = 'v1' | 'R1' | 'glm4' | 'doubao1'
+export type ModelAlias = 'v1' | 'R1' | 'glm46' | 'doubao1'
 
 export interface TokenInfo {
   token: string

@@ -15,6 +15,7 @@ import { ModelTable } from "~/components/model-management/ModelTable"
 import { useMultiTokenInfo } from "~/hooks/use-multiTokenInfo"
 import { successToast, errorToast } from "~components/alter"
 import { Loader2 } from "lucide-react"
+import type { ValidationResult } from "~/ai/client"
 
 export function Settings() {
   const { appearance, loading, updateAppearance } = useSettings()
@@ -41,17 +42,35 @@ export function Settings() {
     }
   }
 
-  const handleImportApiKey = async (modelAlias: string, apiKey: string) => {
+  const handleImportApiKey = async (modelAlias: string, apiKey: string, validationResult?: ValidationResult) => {
     try {
+      console.log('💾 保存验证过的API Key...', {
+        modelAlias,
+        hasValidation: !!validationResult,
+        validationSuccess: validationResult?.success
+      })
+
       await updateTokenInfo(modelAlias, {
         token: apiKey,
         token_rest_money: "0",
         establish_time: new Date().toISOString()
       })
-      successToast("API Key 导入成功")
+
+      // 根据验证结果显示不同的成功消息
+      if (validationResult?.success) {
+        console.log('🎉 API Key保存成功！验证详情:', validationResult.details)
+        successToast(`✅ API Key 验证成功并已保存！`)
+
+        // 如果有余额信息，可以在这里显示
+        if (validationResult.details?.usage) {
+          console.log('💰 Token使用信息:', validationResult.details.usage)
+        }
+      } else {
+        successToast("API Key 导入成功")
+      }
     } catch (error) {
-      errorToast("API Key 导入失败")
-      console.error(error)
+      errorToast("API Key 保存失败")
+      console.error('保存API Key时出错:', error)
     }
   }
 

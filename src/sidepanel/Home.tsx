@@ -74,8 +74,6 @@ export function Home() {
       const res = await sendToBackground({ name: "aiAnswerQuestions" })
       if (res.messages === "ok") {
         successToast("自动答题成功！")
-      } else if (res.messages === "token不存在或token错误!") {
-        errorToast(res.messages || "自动答题失败")
       } else {
         errorToast(res.messages || "自动答题失败")
       }

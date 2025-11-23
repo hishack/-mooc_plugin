@@ -1,4 +1,4 @@
-import type { ModelItem, AIProvider } from './types'
+import type { AIProvider, ModelItem } from './types'
 
 export const AI_MODELS: ModelItem[] = [
   {
@@ -17,17 +17,17 @@ export const AI_MODELS: ModelItem[] = [
   },
   {
     provider: 'glm',
-    model: 'glm-4',
-    alias: 'glm4',
+    model: 'glm-4.6',     
+    alias: 'glm46',       
     baseURL: 'https://open.bigmodel.cn/api/paas/v4',
-    name: 'GLM-4'
+    name: 'GLM-4.6'
   },
   {
     provider: 'doubao',
-    model: 'doubao-pro-4k',
+    model: 'doubao-seed-1.6',
     alias: 'doubao1',
     baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-    name: '豆包 Pro 4K'
+    name: '豆包'
   }
 ]
 
