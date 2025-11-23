@@ -12,11 +12,10 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, MessageCircle } from "lucide-react"
 import { useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
-
 import { errorToast, successToast } from "~components/alter"
 
 const FIX_MESSAGES =
@@ -27,6 +26,10 @@ export function Home() {
   const [questionsText, setQuestionsText] = useState("")
   const [answers, setAnswers] = useState("")
   const [loading, setLoading] = useState(false)
+  const [demoMessage, setDemoMessage] = useState("")
+  const [messageResponse, setMessageResponse] = useState("")
+
+  const [messageLoading, setMessageLoading] = useState(false)
 
   const handleGetQuestions = async () => {
     try {
@@ -91,6 +94,37 @@ export function Home() {
       successToast("题目和提示词已复制！")
     } else {
       errorToast("没有可复制的内容")
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (!demoMessage.trim()) {
+      errorToast("请输入消息内容")
+      return
+    }
+
+    setMessageLoading(true)
+    try {
+      const response = await sendToBackground({
+        name: "demoMessage",
+        body: { message: demoMessage }
+      })
+
+      if (response.success) {
+        setMessageResponse(
+          `Content 响应: ${response.contentResponse?.reply} (接收时间: ${response.contentResponse?.receivedAt})`
+        )
+        successToast("消息发送成功！")
+      } else {
+        setMessageResponse(`发送失败: ${response.message}`)
+        errorToast("消息发送失败")
+      }
+    } catch (error) {
+      console.error("发送消息时发生错误:", error)
+      setMessageResponse("发送失败: 网络错误")
+      errorToast("发送消息失败")
+    } finally {
+      setMessageLoading(false)
     }
   }
 
@@ -183,6 +217,53 @@ export function Home() {
                 自动答题
               </Button>
             )}
+          </CardFooter>
+        </Card>
+
+        <Card className="w-full max-w-sm mt-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              消息通信测试
+            </CardTitle>
+            <CardDescription>
+              测试 Sidepanel → Background → Content → Background → Sidepanel 的消息通信
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="demo-message">发送消息</Label>
+                <Textarea
+                  id="demo-message"
+                  placeholder="输入要发送到 Content 的消息..."
+                  value={demoMessage}
+                  onChange={(e) => setDemoMessage(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {messageResponse && (
+                <div className="grid gap-2">
+                  <Label>响应内容</Label>
+                  <div className="p-3 bg-muted rounded-md text-sm">
+                    {messageResponse}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+
+          <CardFooter>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleSendMessage}
+              disabled={messageLoading || !demoMessage.trim()}>
+              {messageLoading && <Loader2Icon className="animate-spin mr-2" />}
+              发送消息
+            </Button>
           </CardFooter>
         </Card>
       </div>
