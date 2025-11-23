@@ -218,7 +218,7 @@ export function Home() {
           </CardFooter>
         </Card>
 
-        <Card className="w-full max-w-sm mt-4">
+        {/* <Card className="w-full max-w-sm mt-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
@@ -263,7 +263,7 @@ export function Home() {
               发送消息
             </Button>
           </CardFooter>
-        </Card>
+        </Card> */}
       </div>
     </ScrollArea>
   )
